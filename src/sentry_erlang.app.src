@@ -1,0 +1,16 @@
+{application, sentry_erlang,
+ [{description, "Another unofficial Erlang SDK for Sentry (sentry.io)"},
+  {vsn, "0.1.0"},
+  {registered, []},
+  {mod, { sentry_erlang_app, []}},
+  {applications,
+   [kernel,
+    stdlib
+   ]},
+  {env,[]},
+  {modules, []},
+
+  {maintainers, []},
+  {licenses, []},
+  {links, []}
+ ]}.
