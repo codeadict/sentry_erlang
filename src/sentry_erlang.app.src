@@ -10,7 +10,7 @@
   {env,[]},
   {modules, []},
 
-  {maintainers, []},
-  {licenses, []},
-  {links, []}
+  {maintainers, ["Dairon Medina Caro"]},
+  {licenses, ["MIT"]},
+  {links, [{"Github", "https://github.com/codeadict/sentry_erlang"}]}
  ]}.
