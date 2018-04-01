@@ -4,6 +4,12 @@
 %% Hackney options can be set via the `hackney_opts` configuration option.
 %% @end
 request(Method, Url, Headers, Body) ->
+    case hackney:request(Method, Url, Headers, Body) of
+        {ok, 200, _RespHeaders, ClientRef} ->
+            {ok, Body} = hackney:body(ClientRef),
+            {ok, Json} = jsx:decode(Body),
+            ok = maps:get(Json, "id");
+            
     ok.
 
 authorization(PublicKey, Secret) ->
