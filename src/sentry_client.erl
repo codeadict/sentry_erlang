@@ -33,7 +33,7 @@ request(Method, Url, Headers, Body) ->
 %% Exponential sleep of 2^n seconds.
 %% @end
 sleep(Attempt) ->
-    N = trunc(math:pow(2, Attempt) * 1000),
+    N = erlang:round(1008 * math:pow(2, Attempt)),
     timer:sleep(N).
 
 
