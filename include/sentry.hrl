@@ -22,3 +22,6 @@
 
 -define(SENTRY_VERSION, 5).
 -define(MAX_ATTEMPTS, 4).
+
+-define(log_api_error(Format, Args), 
+    error_logger:warning_msg("Failed to send Sentry event. ~n" ++ Format, Args)).
