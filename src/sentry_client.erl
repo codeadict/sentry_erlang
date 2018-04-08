@@ -29,6 +29,15 @@ request(Method, Url, Headers, Body) ->
             error
     end.
 
+
+%% @doc
+%% Get a Sentry DSN which is simply a URI like:
+%%
+%% {PROTOCOL}://{PUBLIC_KEY}[:{SECRET_KEY}]@{HOST}/{PATH}{PROJECT_ID}
+%% @end
+get_dsn() ->
+    ok.
+
 %% @doc 
 %% Exponential sleep of 2^n seconds.
 %% @end
