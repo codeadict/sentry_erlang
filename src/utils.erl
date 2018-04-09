@@ -17,6 +17,7 @@ unix_timestamp() ->
 %% @doc
 %% Generates and hexadecimal uuid4 used for the Sentry event_id
 %% @end
+-spec event_id() -> binary(). 
 event_id() ->
 	U0 = rand:uniform((2 bsl 32) - 1),
 	U1 = rand:uniform((2 bsl 16) - 1),
