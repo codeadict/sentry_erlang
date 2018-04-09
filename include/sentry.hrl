@@ -20,6 +20,9 @@
     modules=#{}
 }).
 
+-type event() :: #event{}.
+-export_type([event/0]).
+
 -define(SENTRY_VERSION, 5).
 -define(MAX_ATTEMPTS, 4).
 
