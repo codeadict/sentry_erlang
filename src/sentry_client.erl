@@ -32,9 +32,10 @@ request(Method, Url, Headers, Body) ->
 
 
 %% @doc
-%% Get a Sentry DSN which is simply a URI like:
+%% Get a Sentry DSN which is a URL like:
 %%
 %% {PROTOCOL}://{PUBLIC_KEY}:{SECRET_KEY}]@{HOST}/{PATH}{PROJECT_ID}
+%% Reference https://docs.sentry.io/clientdev/overview/#parsing-the-dsn
 %% @end
 get_dsn(Dsn) when is_list(Dsn) ->
     get_dsn(iolist_to_binary(Dsn));
@@ -44,7 +45,6 @@ get_dsn(Dsn) when is_binary(Dsn) ->
             [PublicKey, SecretKey] = binary:split(Userinfo, <<":">>),
             [_, BinProjectID] = binary:split(Path, <<"/">>),
             ProjectID = binary_to_integer(BinProjectID),
-            %% The format is "#{protocol}://#{host}:#{port}/api/#{project_id}/store/".
             Endpoint = iolist_to_binary([
                             atom_to_binary(Proto, latin1),
                             "://",
