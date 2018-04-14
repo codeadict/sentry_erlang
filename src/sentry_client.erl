@@ -10,7 +10,8 @@ try_request(Method, Url, Headers, Body, Attempt) ->
           try_request(Method, Url, Headers, Body, Attempt + 1)
     end.
 
-%% @doc Makes the HTTP request to Sentry using hackney.
+%% @doc 
+%% Makes the HTTP request to Sentry using hackney.
 %% Hackney options can be set via the `hackney_opts` configuration option.
 %% @end
 request(Method, Url, Headers, Body) ->
@@ -33,10 +34,24 @@ request(Method, Url, Headers, Body) ->
 %% @doc
 %% Get a Sentry DSN which is simply a URI like:
 %%
-%% {PROTOCOL}://{PUBLIC_KEY}[:{SECRET_KEY}]@{HOST}/{PATH}{PROJECT_ID}
+%% {PROTOCOL}://{PUBLIC_KEY}:{SECRET_KEY}]@{HOST}/{PATH}{PROJECT_ID}
 %% @end
-get_dsn() ->
-    ok.
+get_dsn(Dsn) ->
+    get_dsn(iolist_to_binary(Dsn));
+get_dsn(Dsn) when is_binary(Dsn) ->
+    case http_uri:parse(Dsn) of
+        {ok, {Proto, Userinfo, Host, Port, Path, _Rest}} ->
+            [PublicKey, SecretKey] = binary:split(Userinfo, <<":">>),
+            [_, BinProjectID] = binary:split(Path, <<"/">>),
+            ProjectID = binary_to_integer(BinProjectID),
+            %% The format is "#{protocol}://#{host}:#{port}/api/#{project_id}/store/".
+            Endpoint = io:format("~s://~s:~b/api/~b/store/", [Proto, Host, Port, ProjectID]),
+            {ok, {Endpoint, PublicKey, SecretKey}};
+        _ ->
+            ?log_api_error("Cannot send event because of invalid DSN", []),
+            error
+    end.
+
 
 %% @doc 
 %% Exponential sleep of 2^n seconds.

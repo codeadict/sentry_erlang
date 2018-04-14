@@ -3,7 +3,8 @@
 
 %% @doc
 %% Creates an Event struct out of context collected and options
-%% ## Options
+%%
+%% Options:
 %%  * `:exception` - expection
 %%  * `:message` - message
 %%  * `:stacktrace` - a list of Exception.stacktrace()
