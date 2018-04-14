@@ -36,7 +36,7 @@ request(Method, Url, Headers, Body) ->
 %%
 %% {PROTOCOL}://{PUBLIC_KEY}:{SECRET_KEY}]@{HOST}/{PATH}{PROJECT_ID}
 %% @end
-get_dsn(Dsn) ->
+get_dsn(Dsn) when is_list(Dsn) ->
     get_dsn(iolist_to_binary(Dsn));
 get_dsn(Dsn) when is_binary(Dsn) ->
     case http_uri:parse(Dsn) of
