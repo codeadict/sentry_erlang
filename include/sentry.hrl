@@ -23,7 +23,7 @@
 -type event() :: #event{}.
 -export_type([event/0]).
 
--define(SENTRY_VERSION, 5).
+-define(SENTRY_VERSION, 7).
 -define(MAX_ATTEMPTS, 4).
 
 -define(log_api_error(Format, Args), 
