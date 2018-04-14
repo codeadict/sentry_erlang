@@ -45,7 +45,16 @@ get_dsn(Dsn) when is_binary(Dsn) ->
             [_, BinProjectID] = binary:split(Path, <<"/">>),
             ProjectID = binary_to_integer(BinProjectID),
             %% The format is "#{protocol}://#{host}:#{port}/api/#{project_id}/store/".
-            Endpoint = io:format("~s://~s:~b/api/~b/store/", [Proto, Host, Port, ProjectID]),
+            Endpoint = iolist_to_binary([
+                            atom_to_binary(Proto, latin1),
+                            "://",
+                            Host,
+                            ":",
+                            integer_to_list(Port),
+                            "/api/",
+                            integer_to_list(ProjectID),
+                            "/store/"
+                        ]),
             {ok, {Endpoint, PublicKey, SecretKey}};
         _ ->
             ?log_api_error("Cannot send event because of invalid DSN", []),
