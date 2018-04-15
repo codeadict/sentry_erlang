@@ -11,6 +11,6 @@
   {modules, []},
 
   {maintainers, ["Dairon Medina Caro"]},
-  {licenses, ["MIT"]},
+  {licenses, ["Apache2"]},
   {links, [{"Github", "https://github.com/codeadict/sentry_erlang"}]}
  ]}.
