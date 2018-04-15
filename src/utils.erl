@@ -45,13 +45,10 @@ get_env(App, Variable, Default) ->
     {ok, App} = application:get_application(App),
     case application:get_env(App, Variable) of
         {ok, Value} ->
-            Value;
+             Value;
         undefined ->
             case os:getenv(Variable) of
-                {ok, Value} ->
-                    Value;
-                undefined ->
-                    Default
+                false -> Default;
+                Value -> Value
             end
     end.
-
