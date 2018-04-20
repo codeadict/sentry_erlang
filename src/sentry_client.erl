@@ -11,10 +11,27 @@
 %% WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 %% See the License for the specific language governing permissions and
 %% limitations under the License.
+-module(sentry_client).
 
 -include("sentry.hrl").
 
+-export([
+    send_event/1
+]).
 
+send_event(Event) ->
+    SampleRate = 1,
+    case sample_event(SampleRate) of
+        true ->
+            encode_and_send(Event);
+        false ->
+            unsampled    
+    end.
+
+try_request(Method, Url, Headers, Body) ->
+    try_request(Method, Url, Headers, Body, 1).
+try_request(_Method, _Url, _Headers, _Body, Attempt) when Attempt > ?MAX_ATTEMPTS ->
+    error;
 try_request(Method, Url, Headers, Body, Attempt) ->
     case request(Method, Url, Headers, Body) of
         {ok, Id} ->
@@ -24,23 +41,33 @@ try_request(Method, Url, Headers, Body, Attempt) ->
           try_request(Method, Url, Headers, Body, Attempt + 1)
     end.
 
+
+encode_and_send(Event) ->
+        Body = jsx:encode(Event),
+        case get_headers_and_endpoint() of
+            {Endpoint, Headers} ->
+                try_request(post, Endpoint, Headers, Body);
+            _ ->
+                error
+        end.
+
 %% @doc 
 %% Makes the HTTP request to Sentry using hackney.
 %% Hackney options can be set via the `hackney_opts` configuration option.
 %% @end
-request(Method, Url, Headers, Body) ->
-    case hackney:request(Method, Url, Headers, Body) of
+request(Method, Url, Headers, Payload) ->
+    case hackney:request(Method, Url, Headers, Payload) of
         {ok, 200, _RespHeaders, ClientRef} ->
             {ok, Body} = hackney:body(ClientRef),
-            {ok, Json} = jsx:decode(Body),
-            {ok, maps:get(Json, "id")};
+            Json = jsx:decode(Body, [return_maps]),
+            {ok, maps:get(Json, <<"id">>)};
         {ok, Status, RespHeaders, ClientRef} ->
             hackney:skip_body(ClientRef),
             ErrorHeader = proplists:get_value("X-Sentry-Error", RespHeaders, ""),
-            ?log_api_error("~s~nReceived ~p from Sentry server: ~s", [Body, Status, ErrorHeader]),
+            ?log_api_error("~s~nReceived ~p from Sentry server: ~s", [Payload, Status, ErrorHeader]),
             error;
         {error, _} = Error  ->
-            ?log_api_error("~p~n~s", [Error, Body]),
+            ?log_api_error("~p~n~s", [Error, Payload]),
             error
     end.
 
@@ -69,10 +96,20 @@ get_dsn(Dsn) when is_binary(Dsn) ->
                             integer_to_list(ProjectID),
                             "/store/"
                         ]),
-            {ok, {Endpoint, PublicKey, SecretKey}};
+            {Endpoint, PublicKey, SecretKey};
         _ ->
             ?log_api_error("Cannot send event because of invalid DSN", []),
             error
+    end.
+
+get_headers_and_endpoint() ->
+    %% Todo: This is for development only for now.
+    Dsn = "",
+    case get_dsn(Dsn) of
+        {Endpoint, PublicKey, SecretKey} ->
+            {Endpoint, authorization_headers(PublicKey, SecretKey)};
+      _ ->
+        error
     end.
 
 
@@ -87,15 +124,16 @@ sleep(Attempt) ->
 authorization(PublicKey, Secret) ->
     Timestamp = utils:unix_timestamp(),
     Authorization = [
-        {<<"sentry_version">>, ?SENTRY_VERSION},
-        {<<"sentry_client">>, utils:user_agent()},
-        {<<"sentry_timestamp">>, Timestamp},
-        {<<"sentry_key">>, PublicKey},
-        {<<"sentry_secret">>, Secret}
+			"Sentry sentry_version=", ?SENTRY_VERSION,",",
+			"sentry_client=", utils:user_agent(), ",",
+			"sentry_timestamp=", Timestamp, ",",
+			"sentry_key=", binary_to_list(PublicKey), ",",
+			"sentry_secret=", binary_to_list(Secret)
     ],
-    Authorization.
+    lists:concat(Authorization).
 
 authorization_headers(PublicKey, Secret) ->
+    %%error_logger:info_msg("~p ~n", [authorization(PublicKey, Secret)]),
     [{"User-Agent", sentry_client}, 
      {"X-Sentry-Auth", authorization(PublicKey, Secret)}].
 
