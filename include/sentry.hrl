@@ -12,30 +12,6 @@
 %% See the License for the specific language governing permissions and
 %% limitations under the License.
 
--record(event, {
-    event_id=nil,
-    culpirit=nil,
-    timestamp=nil,
-    message=nil,
-    tags=#{},
-    level=error,
-    platform=erlang,
-    server_name=nil,
-    environment=nil,
-    exception=nil,
-    release=nil,
-    stacktrace=#{frames =>  []},
-    request=#{},
-    extra=#{},
-    user=#{},
-    breadcrumbs=[],
-    fingerprint=[],
-    modules=#{}
-}).
-
--type event() :: #event{}.
--export_type([event/0]).
-
 -define(SENTRY_VERSION, 7).
 -define(MAX_ATTEMPTS, 4).
 
