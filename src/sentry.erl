@@ -15,24 +15,58 @@
 -module(sentry).
 -include("sentry.hrl").
 
-%% @doc
-%% Creates an Event struct out of context collected and options
-%%
-%% Options:
-%%  * `:exception` - expection
-%%  * `:message` - message
-%%  * `:stacktrace` - a list of Exception.stacktrace()
-%%  * `:extra` - map of extra context
-%%  * `:user` - map of user context
-%%  * `:tags` - map of tags context
-%%  * `:request` - map of request context
-%%  * `:breadcrumbs` - list of breadcrumbs
-%%  * `:level` - error level
-%%  * `:fingerprint` -  list of the fingerprint for grouping this event
-%% @end
--spec create_event() -> event(). 
-create_event() ->
-    #event{ event_id = utils:event_id()
-        ,   platform = erlang
-        ,   timestamp = utils:timestamp()
-        }.
+-export([
+    capture_exception/2
+]).
+
+-spec capture_exception(string() | binary(), [parameter()]) -> ok.
+-type parameter() ::
+	{stacktrace, [stackframe()]} |
+	{exception, {exit | error | throw, term()}} |
+	{atom(), binary() | integer()}.
+-type stackframe() ::
+	{module(), atom(), non_neg_integer() | [term()]} |
+	{module(), atom(), non_neg_integer() | [term()], [{atom(), term()}]}.
+capture_exception(Message, Params) when is_list(Message) ->
+    capture_exception(unicode:characters_to_binary(Message), Params);
+capture_exception(Message, _Params0) ->
+    Event = #{
+        event_id => utils:event_id(),
+        platform => erlang,
+        server_name => node(),
+        timestamp => utils:unix_timestamp(),
+        message => term_to_json(Message)
+    },
+    sentry_client:send_event(Event).
+
+frame_to_json({Module, Function, Arguments}) ->
+	frame_to_json({Module, Function, Arguments, []});
+frame_to_json({Module, Function, Arguments, Location}) ->
+	Arity = case is_list(Arguments) of
+		true -> length(Arguments);
+		false -> Arguments
+	end,
+	Line = case lists:keyfind(line, 1, Location) of
+		false -> -1;
+		{line, L} -> L
+	end,
+	{
+		case is_list(Arguments) of
+			true -> [{vars, [iolist_to_binary(io_lib:format("~w", [Argument])) || Argument <- Arguments]}];
+			false -> []
+		end ++ [
+			{module, Module},
+			{function, <<(atom_to_binary(Function, utf8))/binary, "/", (list_to_binary(integer_to_list(Arity)))/binary>>},
+			{lineno, Line},
+			{filename, case lists:keyfind(file, 1, Location) of
+				false -> <<(atom_to_binary(Module, utf8))/binary, ".erl">>;
+				{file, File} -> list_to_binary(File)
+			end}
+		]
+	}.
+
+term_to_json(Term) when is_binary(Term); is_atom(Term) ->
+	Term;
+term_to_json(Term) ->
+    iolist_to_binary(io_lib:format("~120p", [Term])).
+        
