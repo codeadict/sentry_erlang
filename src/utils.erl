@@ -14,11 +14,18 @@
 
 -module(utils).
 
+-export([
+    user_agent/0,
+    unix_timestamp/0,
+    event_id/0,
+    get_env/2,
+    get_env/3
+]).
+
 
 -spec user_agent() -> iolist().
 user_agent() ->
-    {ok, Version} = application:get_key(sentry_erlang, vsn),
-    ["sentry_erlang/", Version].
+    "sentry_erlang/0.0.1".
 
 
 %% @doc 
@@ -40,13 +47,13 @@ event_id() ->
 
 get_env(App, Variable) ->
     get_env(App, Variable, "").
-
+get_env(App, Variable, Default) when is_atom(Variable) ->
+    get_env(App, term_to_binary(Variable), Default);
 get_env(App, Variable, Default) ->
-    {ok, App} = application:get_application(App),
     case application:get_env(App, Variable) of
         {ok, Value} ->
              Value;
-        undefined ->
+        _ ->
             case os:getenv(Variable) of
                 false -> Default;
                 Value -> Value
