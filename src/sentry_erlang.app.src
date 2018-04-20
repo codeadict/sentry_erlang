@@ -5,9 +5,18 @@
   {mod, { sentry_erlang_app, []}},
   {applications,
    [kernel,
-    stdlib
+    stdlib,
+    sasl,
+    crypto,
+    public_key,
+    ssl,
+    hackney,
+    jsx
    ]},
-  {env,[]},
+   {env,[
+    {pool_max_connections, 100},
+    {pool_timeout, 60000}
+  ]},
   {modules, []},
 
   {maintainers, ["Dairon Medina Caro"]},
